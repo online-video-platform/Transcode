@@ -82,11 +82,9 @@ function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
         .run();
 };
 app.use((req, res) => {
-    let headers = req.headers;
+    // let headers = req.headers;
     console.log('Request', req.url);
     if (req.url.startsWith('/stream/')) {
-        console.log('Request', headers);
-        // console.log('Request', req.query);
         let quality = Number(req.query.quality);
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
@@ -97,18 +95,9 @@ app.use((req, res) => {
         let cachedTranscodedPath = path.join(cachePath, "transcoded_" + filename2 + '.mp4');
         if (fs.existsSync(cachedTranscodedPath)) {
             console.log('Cached transcoded file found', cachedTranscodedPath);
-            // res.setHeader('Content-Type', 'video/mp4');
-            // res.setHeader('Content-Disposition', 'inline');
-
-            // let rs = fs.createReadStream(cachedTranscodedPath);
-            // rs.pipe(res);
-            // rs.on('error', (err) => {
-            //     console.log('Error reading cached transcoded file', err);
-            // });
             res.sendFile(cachedTranscodedPath, (err) => {
                 if (err) {
                     console.log('Error reading cached transcoded file', err);
-                    // res.status(500).send('Error reading cached transcoded file');
                 }
             });
             return;
