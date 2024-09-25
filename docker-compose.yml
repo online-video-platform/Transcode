@@ -20,6 +20,9 @@ services:
       - PORT=3001
     ports:
       - "8090:3001"
+    depends_on:
+      torrserver:
+        condition: service_started
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
     #   interval: 3s

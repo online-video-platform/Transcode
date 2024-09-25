@@ -2,3 +2,4 @@ cached/
 node_modules/
 transcoded/
 proxy-cached/
+tmp/
