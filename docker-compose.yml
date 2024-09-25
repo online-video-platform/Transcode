@@ -34,7 +34,7 @@ services:
       origin-proxy:
         condition: service_healthy
     volumes:
-      - ./cached/:/cached/
+      - ./transcoded/:/cached/
       - ./src/:/app/src/
     environment:
       - PROXY_TARGET=http://origin-proxy:3001
@@ -52,4 +52,4 @@ services:
       transcoding-proxy:
         condition: service_healthy
     command:
-      curl --progress-bar "http://transcoding-proxy:3001/stream/Sintel.mp4?link=08ada5a7a6183aae1e09d831df6748d566095a10&index=6&play" -o /dev/null
+      curl --progress-bar "http://transcoding-proxy:3001/stream/Sintel.mp4?link=08ada5a7a6183aae1e09d831df6748d566095a10&index=6&play&quality=0" -o /dev/null

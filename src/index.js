@@ -27,6 +27,9 @@ let qualityLevels = [
 const express = require('express');
 const httpProxy = require('http-proxy');
 const ffmpeg = require('fluent-ffmpeg');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
@@ -42,12 +45,14 @@ function djb2 (str) {
     return hash >>> 0;
 };
 
-function transcodeMedia(cachedTranscodedPath, bitrate, res) {
-    let transcodedPartPath = cachedTranscodedPath + '.part';
+function transcodeMedia(downloadedPath, bitrate, res) {
+    let cachedTranscodedPath = downloadedPath + '.mp4';
+    let transcodedPartPath = cachedTranscodedPath + '.part.mp4';
     console.log('Transcoding to', transcodedPartPath);
-    ffmpeg(cachedTranscodedPath)
-        .videoCodec('libx264')
-        .audioCodec('aac')
+    ffmpeg(downloadedPath)
+        .outputFormat('mp4')
+        .outputOptions('-y')
+        .outputOptions('-c copy')
         .videoBitrate(bitrate)
         .outputOptions('-preset ultrafast')
         .on('end', () => {
@@ -55,6 +60,7 @@ function transcodeMedia(cachedTranscodedPath, bitrate, res) {
             fs.renameSync(transcodedPartPath, cachedTranscodedPath);
             res.sendFile(cachedTranscodedPath);
         })
+        .on('progress', (progress) => { console.log('Processing: ' + progress.percent + '% done'); })
         .on('error', (err) => {
             console.log('Error transcoding', err);
             res.status(500).send('Error transcoding');
@@ -63,32 +69,33 @@ function transcodeMedia(cachedTranscodedPath, bitrate, res) {
         .run();
 };
 app.use((req, res) => {
+    console.log('Request', req.query);
     if (req.url.startsWith('/stream/')) {
-        let quality = req.query.quality;
-        let bitrate = qualityLevels[quality].bitrate;
+        let quality = Number(req.query.quality);
+        console.log('Quality', JSON.stringify([quality]));
+        let qualityLevel = qualityLevels[quality];
+        console.log('Quality level', qualityLevel);
+        let bitrate = qualityLevel.bitrate;
         let filename = djb2(req.url + bitrate);
         // 
         console.log('Transcoding');
-        let cachedTranscodedPath = path.join(cachePath, "transcoded_" + filename + '.mkv');
-        let unfinishedDownloadPath = cachedTranscodedPath + '.part';
+        let downloadedPath = path.join(cachePath, "downloaded_" + filename + '.mkv');
+        let unfinishedDownloadPath = downloadedPath + '.part';
         console.log('Downloading from', proxyTarget + req.url);
-        if (!fs.existsSync(cachePath)) {
-            fs.mkdirSync(cachePath);
-        }
-        if (fs.existsSync(cachedTranscodedPath)) {
-            console.log('Downloaded file already exists, ', cachedTranscodedPath);
-        }else{
-            console.log('Downloading to', cachedTranscodedPath);
-            let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
-            http.get(proxyTarget + req.url, (downloadResponse) => {
-                downloadResponse.pipe(downloadStream);
-            });
-            downloadStream.on('finish', () => {
-                fs.renameSync(unfinishedDownloadPath, cachedTranscodedPath);
-                console.log('Downloaded to', cachedTranscodedPath);
-                transcodeMedia(cachedTranscodedPath, bitrate, res);
-            });
-        }
+        console.log('Downloading to', downloadedPath);
+        let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
+        http.get(proxyTarget + req.url, (downloadResponse) => {
+            downloadResponse.pipe(downloadStream);
+        });
+        downloadStream.on('finish', () => {
+            fs.renameSync(unfinishedDownloadPath, downloadedPath);
+            console.log('Downloaded to', downloadedPath);
+            transcodeMedia(downloadedPath, bitrate, res);
+        });
+        downloadStream.on('error', (err) => {
+            console.log('Error downloading', err);
+            res.status(500).send('Error downloading');
+        });
     }else{
         if (req.url === '/health') {
             res.send('OK');
