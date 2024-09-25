@@ -66,7 +66,9 @@ function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
             // rs.pipe(res);
 
 
-            res.sendFile(cachedTranscodedPath, (err) => {
+            res.sendFile(cachedTranscodedPath, {
+                cacheControl: false,
+            }, (err) => {
                 if (err) {
                     console.log('Error reading transcoded file', err);
                     res.status(500).send('Error reading transcoded file');
@@ -83,19 +85,24 @@ function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
 };
 app.use((req, res) => {
     // let headers = req.headers;
-    console.log('Request', req.url);
-    if (req.url.startsWith('/stream/')) {
+    let reqUrl = req.url;
+    console.log('Request', reqUrl);
+    if (reqUrl.startsWith('/stream/')) {
+        let filenameUrl = req.url.substring(8).split('?')[0];
         let quality = Number(req.query.quality);
+        let reqUrl = "/stream/" + filenameUrl + "?link=" + encodeURIComponent(req.query.link) + "&index=" + req.query.index + "&play&quality=" + quality;
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
-        let filename = djb2(req.url);
-        let filename2 = djb2(req.url + bitrate);
+        let filename = djb2(reqUrl);
+        let filename2 = djb2(reqUrl + bitrate);
         // 
         let downloadedPath = path.join('/tmp/', "downloaded_" + filename + '.mkv');
         let cachedTranscodedPath = path.join(cachePath, "transcoded_" + filename2 + '.mp4');
         if (fs.existsSync(cachedTranscodedPath)) {
             console.log('Cached transcoded file found', cachedTranscodedPath);
-            res.sendFile(cachedTranscodedPath, (err) => {
+            res.sendFile(cachedTranscodedPath, {
+                cacheControl: false,
+            }, (err) => {
                 if (err) {
                     console.log('Error reading cached transcoded file', err);
                 }
@@ -108,10 +115,10 @@ app.use((req, res) => {
             console.log('Downloaded file found', downloadedPath);
             transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res);
         }else{
-            console.log('Downloading from', proxyTarget + req.url);
+            console.log('Downloading from', proxyTarget + reqUrl);
             console.log('Downloading to', downloadedPath);
             let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
-            http.get(proxyTarget + req.url, (downloadResponse) => {
+            http.get(proxyTarget + reqUrl, (downloadResponse) => {
                 downloadResponse.pipe(downloadStream);
             });
             downloadStream.on('finish', () => {
@@ -125,10 +132,10 @@ app.use((req, res) => {
             });
         }
     }else{
-        if (req.url === '/health') {
+        if (reqUrl === '/health') {
             res.send('OK');
         }else {
-            console.log('Proxying request', req.url);
+            console.log('Proxying request', reqUrl);
             proxy.web(req, res);
         }
     }
