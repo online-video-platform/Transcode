@@ -40,6 +40,8 @@ services:
       - PROXY_TARGET=http://origin-proxy:3001
       - CACHE_PATH=/cached/
       - PORT=3001
+    ports:
+      - "8090:3001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 3s

@@ -56,8 +56,11 @@ function transcodeMedia(downloadedPath, bitrate, res) {
         .videoBitrate(bitrate)
         .outputOptions('-preset ultrafast')
         .on('end', () => {
-            console.log('Transcoding finished');
             fs.renameSync(transcodedPartPath, cachedTranscodedPath);
+            console.log('Transcoded to', cachedTranscodedPath);
+            res.setHeader('Content-Type', 'video/mp4');
+            res.setHeader('Content-Disposition', 'inline');
+
             res.sendFile(cachedTranscodedPath);
         })
         .on('progress', (progress) => { console.log('Processing: ' + progress.percent + '% done'); })
