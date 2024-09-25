@@ -45,8 +45,7 @@ function djb2 (str) {
     return hash >>> 0;
 };
 
-function transcodeMedia(downloadedPath, bitrate, res) {
-    let cachedTranscodedPath = downloadedPath + '.mp4';
+function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
     let transcodedPartPath = cachedTranscodedPath + '.part.mp4';
     console.log('Transcoding to', transcodedPartPath);
     ffmpeg(downloadedPath)
@@ -75,14 +74,22 @@ app.use((req, res) => {
     console.log('Request', req.query);
     if (req.url.startsWith('/stream/')) {
         let quality = Number(req.query.quality);
-        console.log('Quality', JSON.stringify([quality]));
-        let qualityLevel = qualityLevels[quality];
-        console.log('Quality level', qualityLevel);
+        let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
         let filename = djb2(req.url + bitrate);
         // 
         console.log('Transcoding');
         let downloadedPath = path.join(cachePath, "downloaded_" + filename + '.mkv');
+        let cachedTranscodedPath = downloadedPath + '.mp4';
+        if (fs.existsSync(cachedTranscodedPath)) {
+            console.log('Cached transcoded file found', cachedTranscodedPath);
+            res.setHeader('Content-Type', 'video/mp4');
+            res.setHeader('Content-Disposition', 'inline');
+            res.setHeader('Accept-Ranges', 'bytes'); // Enable partial download
+            
+            res.sendFile(cachedTranscodedPath);
+            return;
+        }
         let unfinishedDownloadPath = downloadedPath + '.part';
         console.log('Downloading from', proxyTarget + req.url);
         console.log('Downloading to', downloadedPath);
@@ -93,7 +100,7 @@ app.use((req, res) => {
         downloadStream.on('finish', () => {
             fs.renameSync(unfinishedDownloadPath, downloadedPath);
             console.log('Downloaded to', downloadedPath);
-            transcodeMedia(downloadedPath, bitrate, res);
+            transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res);
         });
         downloadStream.on('error', (err) => {
             console.log('Error downloading', err);
