@@ -84,9 +84,6 @@ app.use((req, res) => {
         if (fs.existsSync(cachedTranscodedPath)) {
             console.log('Cached transcoded file found', cachedTranscodedPath);
             res.setHeader('Content-Type', 'video/mp4');
-            res.setHeader('Content-Disposition', 'inline');
-            res.setHeader('Accept-Ranges', 'bytes'); // Enable partial download
-            
             res.sendFile(cachedTranscodedPath);
             return;
         }
