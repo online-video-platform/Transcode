@@ -36,6 +36,8 @@ const app = express();
 let port = process.env.PORT;
 let proxyTarget = process.env.PROXY_TARGET;
 let cachePath = process.env.CACHE_PATH;
+console.log('Proxy target', proxyTarget);
+console.log('Cache path', cachePath);
 const proxy = httpProxy.createProxyServer({ target: proxyTarget });
 function djb2 (str) {
     let hash = 5381;
@@ -58,9 +60,18 @@ function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
             fs.renameSync(transcodedPartPath, cachedTranscodedPath);
             console.log('Transcoded to', cachedTranscodedPath);
             res.setHeader('Content-Type', 'video/mp4');
-            res.setHeader('Content-Disposition', 'inline');
+            // res.setHeader('Content-Disposition', 'inline');
 
-            res.sendFile(cachedTranscodedPath);
+            // let rs = fs.createReadStream(cachedTranscodedPath);
+            // rs.pipe(res);
+
+
+            res.sendFile(cachedTranscodedPath, (err) => {
+                if (err) {
+                    console.log('Error reading transcoded file', err);
+                    res.status(500).send('Error reading transcoded file');
+                }
+            });
         })
         .on('progress', (progress) => { console.log('Processing: ' + progress.percent + '% done'); })
         .on('error', (err) => {
@@ -71,49 +82,70 @@ function transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res) {
         .run();
 };
 app.use((req, res) => {
-    console.log('Request', req.query);
+    let headers = req.headers;
+    console.log('Request', req.url);
     if (req.url.startsWith('/stream/')) {
+        console.log('Request', headers);
+        // console.log('Request', req.query);
         let quality = Number(req.query.quality);
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
-        let filename = djb2(req.url + bitrate);
+        let filename = djb2(req.url);
+        let filename2 = djb2(req.url + bitrate);
         // 
-        console.log('Transcoding');
-        let downloadedPath = path.join(cachePath, "downloaded_" + filename + '.mkv');
-        let cachedTranscodedPath = downloadedPath + '.mp4';
+        let downloadedPath = path.join('/tmp/', "downloaded_" + filename + '.mkv');
+        let cachedTranscodedPath = path.join(cachePath, "transcoded_" + filename2 + '.mp4');
         if (fs.existsSync(cachedTranscodedPath)) {
             console.log('Cached transcoded file found', cachedTranscodedPath);
-            res.setHeader('Content-Type', 'video/mp4');
-            res.sendFile(cachedTranscodedPath);
+            // res.setHeader('Content-Type', 'video/mp4');
+            // res.setHeader('Content-Disposition', 'inline');
+
+            // let rs = fs.createReadStream(cachedTranscodedPath);
+            // rs.pipe(res);
+            // rs.on('error', (err) => {
+            //     console.log('Error reading cached transcoded file', err);
+            // });
+            res.sendFile(cachedTranscodedPath, (err) => {
+                if (err) {
+                    console.log('Error reading cached transcoded file', err);
+                    // res.status(500).send('Error reading cached transcoded file');
+                }
+            });
             return;
         }
+        console.log('Transcoding');
         let unfinishedDownloadPath = downloadedPath + '.part';
-        console.log('Downloading from', proxyTarget + req.url);
-        console.log('Downloading to', downloadedPath);
-        let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
-        http.get(proxyTarget + req.url, (downloadResponse) => {
-            downloadResponse.pipe(downloadStream);
-        });
-        downloadStream.on('finish', () => {
-            fs.renameSync(unfinishedDownloadPath, downloadedPath);
-            console.log('Downloaded to', downloadedPath);
+        if (fs.existsSync(downloadedPath)) {
+            console.log('Downloaded file found', downloadedPath);
             transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res);
-        });
-        downloadStream.on('error', (err) => {
-            console.log('Error downloading', err);
-            res.status(500).send('Error downloading');
-        });
+        }else{
+            console.log('Downloading from', proxyTarget + req.url);
+            console.log('Downloading to', downloadedPath);
+            let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
+            http.get(proxyTarget + req.url, (downloadResponse) => {
+                downloadResponse.pipe(downloadStream);
+            });
+            downloadStream.on('finish', () => {
+                fs.renameSync(unfinishedDownloadPath, downloadedPath);
+                console.log('Downloaded to', downloadedPath);
+                transcodeMedia(downloadedPath, cachedTranscodedPath, bitrate, res);
+            });
+            downloadStream.on('error', (err) => {
+                console.log('Error downloading', err);
+                // res.status(500).send('Error downloading');
+            });
+        }
     }else{
         if (req.url === '/health') {
             res.send('OK');
         }else {
+            console.log('Proxying request', req.url);
             proxy.web(req, res);
         }
     }
 });
 
-
-app.use(express.json());
+// app.use(express.json());
 
 app.listen(port, () => {
     console.log(`Transcoding proxy listening on port ${port}`);
