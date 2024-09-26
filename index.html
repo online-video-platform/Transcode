@@ -1,66 +1,20 @@
 <!DOCTYPE html>
-<!-- curl 'https://http-192-168-1-104-8090.schnworks.com/torrents' \
--X 'POST' \
--H 'Content-Type: application/json' \
--H 'Accept: application/json, text/plain, */*' \
--H 'Sec-Fetch-Site: same-origin' \
--H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \
--H 'Accept-Encoding: gzip, deflate, br' \
--H 'Sec-Fetch-Mode: cors' \
--H 'Host: http-192-168-1-104-8090.schnworks.com' \
--H 'Origin: https://http-192-168-1-104-8090.schnworks.com' \
--H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15' \
--H 'Referer: https://http-192-168-1-104-8090.schnworks.com/' \
--H 'Content-Length: 1320' \
--H 'Connection: keep-alive' \
--H 'Sec-Fetch-Dest: empty' \
--H 'Cookie: _ga=GA1.1.1981537127.1726408254; _ga_T4RC2BFRSF=GS1.1.1727281318.29.1.1727281339.0.0.0' \
---data-binary '{"action":"add","link":"magnet:?xt=urn:btih:9EB7A3A97AEA5D962376484D9BCA400FB22B67C8&dn=Succubus.2024.720p.AMZN.WEBRip.800MB.x264-GalaxyRG&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Fexplodie.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce&tr=udp%3A%2F%2Fipv4.tracker.harry.lu%3A80%2Fannounce&tr=udp%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.birkenwald.de%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.moeking.me%3A6969%2Fannounce&tr=udp%3A%2F%2Fopentor.org%3A2710%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fuploads.gamecoast.net%3A6969%2Fannounce&tr=https%3A%2F%2Ftracker.foreverpirates.co%3A443%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fcoppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce","title":"","category":"","poster":"","save_to_db":true}' -->
-<!-- <video>
-    <source src="" type="video/mp4">
-    Your browser does not support the video tag.
-</video> -->
-<!-- curl 'https://http-192-168-1-104-8090.schnworks.com/torrents' \
--X 'POST' \
--H 'Content-Type: application/json' \
--H 'Accept: application/json, text/plain, */*' \
--H 'Sec-Fetch-Site: same-origin' \
--H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \
--H 'Accept-Encoding: gzip, deflate, br' \
--H 'Sec-Fetch-Mode: cors' \
--H 'Host: http-192-168-1-104-8090.schnworks.com' \
--H 'Origin: https://http-192-168-1-104-8090.schnworks.com' \
--H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15' \
--H 'Referer: https://http-192-168-1-104-8090.schnworks.com/' \
--H 'Content-Length: 17' \
--H 'Connection: keep-alive' \
--H 'Sec-Fetch-Dest: empty' \
--H 'Cookie: _ga_T4RC2BFRSF=GS1.1.1727315965.30.1.1727315998.0.0.0; _ga=GA1.1.1981537127.1726408254' \
---data-binary '{"action":"list"}' -->
+
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <div id="app">
-    <button @click="testMagnet">Test magnet</button>
-    {{ message }}
-    {{ magnet_link }}
+    <button @click="testMagnet('https://webtorrent.io/torrents/sintel.torrent')">Test Magnet</button>
+    <button @click="testMagnet('https://webtorrent.io/torrents/big-buck-bunny.torrent')">Test Magnet 2</button>
+    <button @click="testMagnet('https://webtorrent.io/torrents/tears-of-steel.torrent')">Test Magnet 3</button>
+    <button @click="testMagnet('https://webtorrent.io/torrents/cosmos-laundromat.torrent')">Test Magnet 4</button>
+    <button @click="testMagnet('https://webtorrent.io/torrents/wired-cd.torrent')">Test Magnet 5</button>
     <textarea v-model="magnet_link" @input="updateLink" placeholder="Enter magnet link"></textarea>
-
-    <!-- <div v-for="torrent in torrentsList">
-        {{ torrent.hash }}
-        {{ torrent.data.TorrServer.Files }}
-    </div> -->
-    <div v-if="file_stats">
-        <div v-for="(value, key) in file_stats">
-            {{ key }}: {{ value }}
-            {{ value.length }}
-            {{ value.id }}
-            <video controls>
-                <!-- /stream/Sintel.mp4?link=08ada5a7a6183aae1e09d831df6748d566095a10&index=6&play&31232 -->
-                <source :src="'/stream/' + value.nice_filename + '?link=' + hash + '&index=' + value.id + '&play'" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div>
+    <div v-if="streamUrl">
+        <video controls>
+            <source :src="streamUrl" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
     </div>
 </div>
 
@@ -69,39 +23,24 @@
     const { createApp, ref } = Vue
 
     createApp({
-        mounted() {
-            let component = this
-            console.log('mounted')
-            axios.post('/torrents', {
-                action: 'list'
-            }).then(response => {
-                component.torrentsList = response.data.map(torrent => {
-                    return {
-                        hash: torrent.hash,
-                        data: JSON.parse(torrent.data)
-                    }
-                })
-            }).catch(error => {
-                console.log(error)
-            })
-        },
         setup() {
             const message = ref('Hello vue!')
             const magnet_link = ref('')
             const file_stats = ref({})
             const hash = ref('')
             const torrentsList = ref([])
+            const streamUrl = ref('')
             return {
                 torrentsList,
                 hash,
                 file_stats,
+                streamUrl,
                 magnet_link,
                 message
             }
         },
         methods: {
-            testMagnet() {
-                let magnet_link = 'https://webtorrent.io/torrents/sintel.torrent'
+            testMagnet(magnet_link) {
                 this.magnet_link = magnet_link
                 this.updateLink()
             },
@@ -132,10 +71,8 @@
                         file.nice_filename = file.path.replace(/[^a-zA-Z0-9]/g, '_') + '.' + ext
                         return file
                     })
-                
-                // }).catch(error => {
-                //     console.log(error)
-                // })
+                let firstFileStats = component.file_stats[0]
+                component.streamUrl = `/stream/${firstFileStats.nice_filename}?link=${hash}&index=${firstFileStats.id}&play&${new Date().getTime()}`
                 console.log(component.file_stats)
             }
         }
