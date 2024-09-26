@@ -11,7 +11,7 @@
     <button @click="testMagnet('https://webtorrent.io/torrents/wired-cd.torrent')">Test Magnet 5</button>
     <textarea v-model="magnet_link" @input="updateLink" placeholder="Enter magnet link"></textarea>
     <div v-if="streamUrl">
-        <video controls>
+        <video controls ref="video">
             <source :src="streamUrl" type="video/mp4">
             Your browser does not support the video tag.
         </video>
@@ -66,15 +66,35 @@
                     .filter(file => file.length > 10_000)
                     .filter(file => file.path.includes('.mp4') || file.path.includes('.mkv') || file.path.includes('.avi'))
                     .map((file, index) => {
-                        // file.id = index
                         let ext = file.path.split('.').pop()
                         file.nice_filename = file.path.replace(/[^a-zA-Z0-9]/g, '_') + '.' + ext
                         return file
                     })
                 let firstFileStats = component.file_stats[0]
                 component.streamUrl = `/stream/${firstFileStats.nice_filename}?link=${hash}&index=${firstFileStats.id}&play&${new Date().getTime()}`
+                this.$refs.video.load()
+                let headReq = await axios.head(component.streamUrl + '&head=' + new Date().getTime())
+                console.log(headReq.headers['cf-cache-status'])
+                let refVideo = component.$refs.video
+                setTimeout(() => {
+                    // stale or expired or miss
+                    let cfCacheStatus = headReq.headers['cf-cache-status']
+                    if (cfCacheStatus !== 'HIT' || cfCacheStatus !== 'REVALIDATED') {
+                        component.streamUrl = `/stream/${firstFileStats.nice_filename}?link=${hash}&index=${firstFileStats.id}&play&${new Date().getTime()}`
+                        refVideo.load()
+                    }else{
+                        refVideo.play()
+                    }
+                    let currentTime = refVideo.currentTime
+                    console.log(currentTime)
+                }, 30_000)
+
                 console.log(component.file_stats)
             }
         }
     }).mount('#app')
 </script>
+
+
+
+

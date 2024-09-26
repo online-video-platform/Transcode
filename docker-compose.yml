@@ -16,6 +16,7 @@ services:
       - TARGET=http://torrserver:8090
       - CACHE_PATH=/cached/
       - PORT=3001
+    restart: unless-stopped
     depends_on:
       torrserver:
         condition: service_started
@@ -30,6 +31,7 @@ services:
       - PROXY_TARGET=http://origin-proxy:3001
       - CACHE_PATH=/cached/
       - PORT=3001
+    restart: unless-stopped
     ports:
       - "8090:3001"
     depends_on:
