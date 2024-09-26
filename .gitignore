@@ -3,3 +3,4 @@ node_modules/
 transcoded/
 proxy-cached/
 tmp/
+origin-cached/

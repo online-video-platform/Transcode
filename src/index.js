@@ -59,21 +59,8 @@ function transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bi
         .on('end', () => {
             fs.renameSync(transcodedPartPath, cachedTranscodedPath);
             console.log('Transcoded to', cachedTranscodedPath);
-            // res.setHeader('Content-Type', 'video/mp4');
-            // res.setHeader('Content-Disposition', 'inline');
-
-            // let rs = fs.createReadStream(cachedTranscodedPath);
-            // rs.pipe(res);
 
             res.redirect('/cached/' + transcodedFile);
-            // res.sendFile(cachedTranscodedPath, {
-            //     cacheControl: false,
-            // }, (err) => {
-            //     if (err) {
-            //         console.log('Error reading transcoded file', err);
-            //         res.status(500).send('Error reading transcoded file');
-            //     }
-            // });
         })
         .on('progress', (progress) => { console.log('Processing: ' + progress.percent + '% done'); })
         .on('error', (err) => {
