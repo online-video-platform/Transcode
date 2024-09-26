@@ -20,15 +20,36 @@
     <source src="" type="video/mp4">
     Your browser does not support the video tag.
 </video> -->
-
+<!-- curl 'https://http-192-168-1-104-8090.schnworks.com/torrents' \
+-X 'POST' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json, text/plain, */*' \
+-H 'Sec-Fetch-Site: same-origin' \
+-H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \
+-H 'Accept-Encoding: gzip, deflate, br' \
+-H 'Sec-Fetch-Mode: cors' \
+-H 'Host: http-192-168-1-104-8090.schnworks.com' \
+-H 'Origin: https://http-192-168-1-104-8090.schnworks.com' \
+-H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15' \
+-H 'Referer: https://http-192-168-1-104-8090.schnworks.com/' \
+-H 'Content-Length: 17' \
+-H 'Connection: keep-alive' \
+-H 'Sec-Fetch-Dest: empty' \
+-H 'Cookie: _ga_T4RC2BFRSF=GS1.1.1727315965.30.1.1727315998.0.0.0; _ga=GA1.1.1981537127.1726408254' \
+--data-binary '{"action":"list"}' -->
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <div id="app">
+    <button @click="testMagnet">Test magnet</button>
     {{ message }}
     {{ magnet_link }}
     <textarea v-model="magnet_link" @input="updateLink" placeholder="Enter magnet link"></textarea>
 
+    <!-- <div v-for="torrent in torrentsList">
+        {{ torrent.hash }}
+        {{ torrent.data.TorrServer.Files }}
+    </div> -->
     <div v-if="file_stats">
         <div v-for="(value, key) in file_stats">
             {{ key }}: {{ value }}
@@ -48,12 +69,30 @@
     const { createApp, ref } = Vue
 
     createApp({
+        mounted() {
+            let component = this
+            console.log('mounted')
+            axios.post('/torrents', {
+                action: 'list'
+            }).then(response => {
+                component.torrentsList = response.data.map(torrent => {
+                    return {
+                        hash: torrent.hash,
+                        data: JSON.parse(torrent.data)
+                    }
+                })
+            }).catch(error => {
+                console.log(error)
+            })
+        },
         setup() {
             const message = ref('Hello vue!')
             const magnet_link = ref('')
             const file_stats = ref({})
             const hash = ref('')
+            const torrentsList = ref([])
             return {
+                torrentsList,
                 hash,
                 file_stats,
                 magnet_link,
@@ -61,32 +100,43 @@
             }
         },
         methods: {
-            updateLink() {
+            testMagnet() {
+                let magnet_link = 'https://webtorrent.io/torrents/sintel.torrent'
+                this.magnet_link = magnet_link
+                this.updateLink()
+            },
+            async updateLink() {
                 let component = this
-                axios.post('/torrents', {
+                let response = await axios.post('/torrents', {
                     action: 'add',
                     link: this.magnet_link,
                     title: '',
                     category: '',
                     poster: '',
                     save_to_db: true
-                }).then(response => {
-                    console.log(response.data.file_stats)
-                    let hash = response.data.hash
-                    component.hash = hash
-                    component.file_stats = response.data.file_stats
-                        .filter(file => file.length > 1000)
-                        .filter(file => file.path.includes('.mp4') || file.path.includes('.mkv') || file.path.includes('.avi'))
-                        .map((file, index) => {
-                            file.id = index
-                            let ext = file.path.split('.').pop()
-                            file.nice_filename = file.path.replace(/[^a-zA-Z0-9]/g, '_') + '.' + ext
-                            return file
-                        })
-                }).catch(error => {
-                    console.log(error)
                 })
-                console.log(this.magnet_link)
+                let hash = response.data.hash
+                component.hash = hash
+                let actionGet = await axios.post('/torrents', {
+                    action: 'get',
+                    hash: hash
+                });
+                // 
+                console.log(actionGet.data.file_stats);
+                component.file_stats = actionGet.data.file_stats
+                    .filter(file => file.length > 10_000)
+                    .filter(file => file.path.includes('.mp4') || file.path.includes('.mkv') || file.path.includes('.avi'))
+                    .map((file, index) => {
+                        // file.id = index
+                        let ext = file.path.split('.').pop()
+                        file.nice_filename = file.path.replace(/[^a-zA-Z0-9]/g, '_') + '.' + ext
+                        return file
+                    })
+                
+                // }).catch(error => {
+                //     console.log(error)
+                // })
+                console.log(component.file_stats)
             }
         }
     }).mount('#app')
