@@ -50,11 +50,13 @@ function djb2 (str) {
 function transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bitrate, res) {
     let transcodedPartPath = cachedTranscodedPath + '.part.mp4';
     console.log('Transcoding to', transcodedPartPath);
-    ffmpeg(downloadedPath)
+    let ffmpegProcess = ffmpeg(downloadedPath)
         .outputFormat('mp4')
         .outputOptions('-y')
-        .outputOptions('-c copy')
-        .videoBitrate(bitrate)
+    if (!downloadedPath.endsWith('.webm')) {
+        ffmpegProcess = ffmpegProcess.outputOptions('-c copy');
+    }
+    ffmpegProcess.videoBitrate(bitrate)
         .outputOptions('-preset ultrafast')
         .on('end', () => {
             fs.renameSync(transcodedPartPath, cachedTranscodedPath);
@@ -78,6 +80,7 @@ app.use((req, res, next) => {
     console.log('Request', reqUrl);
     if (reqUrl.startsWith('/stream/')) {
         let filenameUrl = req.url.substring(8).split('?')[0];
+        let ext = path.extname(filenameUrl);
         let quality = Number(req.query.quality) || 0;
         let reqUrl = "/stream/" + filenameUrl + "?link=" + encodeURIComponent(req.query.link) + "&index=" + req.query.index + "&play&quality=" + quality;
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
@@ -85,7 +88,7 @@ app.use((req, res, next) => {
         let filename = djb2(reqUrl);
         let filename2 = djb2(reqUrl + bitrate);
         // 
-        let downloadedPath = path.join('/tmp/', "downloaded_" + filename + '.mkv');
+        let downloadedPath = path.join('/tmp/', "downloaded_" + filename + ext);
         let transcodedFile = "transcoded_" + filename2 + '.mp4';
         let cachedTranscodedPath = path.join(cachePath, transcodedFile);
         if (fs.existsSync(cachedTranscodedPath)) {
