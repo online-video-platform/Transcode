@@ -82,14 +82,12 @@ app.use((req, res, next) => {
         let filenameUrl = req.url.substring(8).split('?')[0];
         let ext = path.extname(filenameUrl);
         let quality = Number(req.query.quality) || 0;
-        let reqUrl = "/stream/" + filenameUrl + "?link=" + encodeURIComponent(req.query.link) + "&index=" + req.query.index + "&play&quality=" + quality;
+        let reqUrl = "/stream/" + filenameUrl + "?link=" + encodeURIComponent(req.query.link) + "&index=" + req.query.index + "&play";
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
-        let filename = djb2(reqUrl);
-        let filename2 = djb2(reqUrl + bitrate);
         // 
-        let downloadedPath = path.join('/tmp/', "downloaded_" + filename + ext);
-        let transcodedFile = "transcoded_" + filename2 + '.mp4';
+        let downloadedPath = path.join('/tmp/', "downloaded_" + djb2(reqUr2l) + ext);
+        let transcodedFile = "transcoded_" + djb2(reqU2rl + bitrate) + '.mp4';
         let cachedTranscodedPath = path.join(cachePath, transcodedFile);
         if (fs.existsSync(cachedTranscodedPath)) {
             console.log('Cached transcoded file found', cachedTranscodedPath);
