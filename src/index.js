@@ -11,11 +11,11 @@
 let qualityLevels = [
     { resolution: '144p', bitrate: '400k' },
     { resolution: '240p', bitrate: '800k' },
-    { resolution: '360p', bitrate: '1.2M' },
-    { resolution: '480p', bitrate: '2M' },
-    { resolution: '720p', bitrate: '3M' },
-    { resolution: '1080p', bitrate: '6M' },
-    { resolution: '4K', bitrate: '20M' }
+    { resolution: '360p', bitrate: '1200k' },
+    { resolution: '480p', bitrate: '2000k' },
+    { resolution: '720p', bitrate: '3000k' },
+    { resolution: '1080p', bitrate: '6000k' },
+    { resolution: '4K', bitrate: '20000k' }
 ];
 // - **How It Works**:
 //   1. **Receives Original Video**: Takes the video from the main server after upload.
@@ -52,7 +52,8 @@ function transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bi
     console.log('Transcoding to', transcodedPartPath);
     let ffmpegProcess = ffmpeg(downloadedPath)
         .outputFormat('mp4')
-        .outputOptions('-y')
+        .outputOptions('-y');
+    console.log('Downloaded path', downloadedPath, bitrate);
     if (!downloadedPath.endsWith('.webm')) {
         ffmpegProcess = ffmpegProcess.outputOptions('-c copy');
     }
@@ -68,6 +69,9 @@ function transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bi
         .on('error', (err) => {
             console.log('Error transcoding', err);
             res.status(500).send('Error transcoding');
+        })
+        .on('start', (commandLine) => {
+            console.log('Spawned Ffmpeg with command: ' + commandLine);
         })
         .output(transcodedPartPath)
         .run();
