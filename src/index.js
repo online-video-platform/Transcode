@@ -86,7 +86,7 @@ app.use((req, res, next) => {
         let qualityLevel = qualityLevels[quality] || qualityLevels[0];
         let bitrate = qualityLevel.bitrate;
         // 
-        let downloadedPath = path.join('/tmp/', "downloaded_" + djb2(reqUr2l) + ext);
+        let downloadedPath = path.join('/tmp/', "downloaded_" + djb2(reqUrl) + ext);
         let transcodedFile = "transcoded_" + djb2(reqU2rl + bitrate) + '.mp4';
         let cachedTranscodedPath = path.join(cachePath, transcodedFile);
         if (fs.existsSync(cachedTranscodedPath)) {
