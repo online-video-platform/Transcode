@@ -24,13 +24,12 @@ let qualityLevels = [
 
 // **Summary**: The Transcoding Proxy ensures that every video is converted into different formats and quality levels, making it accessible and playable for all viewers, regardless of their device or internet speed. 🎬🌟
 
-const fetch = require('node-fetch');
-const express = require('express');
-const httpProxy = require('http-proxy');
-const ffmpeg = require('fluent-ffmpeg');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import fetch from 'node-fetch';
+import express from 'express';
+import httpProxy from 'http-proxy';
+import ffmpeg from 'fluent-ffmpeg';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
 
