@@ -78,7 +78,7 @@ function transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bi
 };
 // serve static files from /cached/ directory
 app.use('/cached', express.static(cachePath));
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     // let headers = req.headers;
     let reqUrl = req.url;
     console.log('Request', reqUrl);
@@ -102,25 +102,20 @@ app.use((req, res, next) => {
             return;
         }
         console.log('Transcoding');
-        let unfinishedDownloadPath = downloadedPath + '.part';
         if (fs.existsSync(downloadedPath)) {
             console.log('Downloaded file found', downloadedPath);
             transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bitrate, res);
         }else{
             console.log('Downloading from', proxyTarget + reqUrl);
             console.log('Downloading to', downloadedPath);
+            let unfinishedDownloadPath = downloadedPath + '.part';
             let downloadStream = fs.createWriteStream(unfinishedDownloadPath);
-            http.get(proxyTarget + reqUrl, (downloadResponse) => {
-                downloadResponse.pipe(downloadStream);
-            });
-            downloadStream.on('finish', () => {
+            let fetching = await fetch(proxyTarget + reqUrl);
+            fetching.body.pipe(downloadStream);
+            fetching.body.on('end', () => {
                 fs.renameSync(unfinishedDownloadPath, downloadedPath);
                 console.log('Downloaded to', downloadedPath);
                 transcodeMedia(downloadedPath, transcodedFile, cachedTranscodedPath, bitrate, res);
-            });
-            downloadStream.on('error', (err) => {
-                console.log('Error downloading', err);
-                // res.status(500).send('Error downloading');
             });
         }
     }else{
